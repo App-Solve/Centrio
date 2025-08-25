@@ -1,0 +1,28 @@
+/*
+Description : Wrapper class store address feilds
+Author: Sindhur
+Date Of Creation: 28-11-2017
+*/
+public class MapListsWpr {
+	//contains list of Prospect accounts
+    @AuraEnabled
+	public list<MapAddrWpr> lstMapWpr{get;set;}
+	//contains list of Customer accounts
+    @AuraEnabled
+	public list<CusAddrWpr> lstCusAddrWpr{get;set;}
+	//contains list of opportunity stages name
+    @AuraEnabled
+	public list<StageWrapCls> lstStages{get;set;}
+	//contains list of bulling cities
+	@AuraEnabled
+	public list<String> lstCity{get;set;}
+	//contains list of Opportunities record type names
+    @AuraEnabled
+	public List<String> oppRecordTypes{get;set;}
+	//contains list of Opportunities deal type values
+    @AuraEnabled
+	public List<String> oppDealTypes{get;set;}
+    //contains DrawMapTbl value
+	@AuraEnabled
+	public String geoJson{get;set;}
+}
