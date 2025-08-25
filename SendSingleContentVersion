@@ -1,0 +1,58 @@
+@RestResource(urlMapping='/GetSingleContentVersion/*')
+	global with sharing class SendSingleContentVersion {
+	 
+    // Send this a ContentVersion ID and it sends the file back
+    // base64 encoded
+    // One at a time becuase I  couldn't figure it out otherwise
+    // with a deadline
+    @HttpGet
+    global static void doGet() {
+	// Returns a file as a Base64 encoded string
+		
+        // Parses the object ID from the web call
+		RestRequest req = RestContext.request;
+        String objId = req.requestURI.substring(req.requestURI.lastIndexOf('/')+1);
+		System.Debug(objId);
+        // Get the content document Id's from the ContentDoc
+        // 0017h00000WzVrYAAV
+		ContentVersion cv = [SELECT Id, ContentDocumentId, Title,
+							 FileExtension,
+							 FileType,
+							 VersionData,
+                             FirstPublishLocationId
+							 FROM ContentVersion 
+							 WHERE Id = :objId];
+
+
+        // start the json
+        JSONGenerator body = JSON.createGenerator(true);
+       		body.writeStartObject();
+        	body.writeFieldName('Document');
+			body.writeStartArray();
+        	body.writeStartObject();
+                if(cv.VersionData != null) {
+                    body.writeStringField('fileData', EncodingUtil.base64Encode(cv.VersionData));
+                }
+                if(cv.FileExtension != null) { 
+                    body.writeStringField('fileExtension', cv.FileExtension); 
+                }
+                if(cv.Title != null) {
+                    body.writeStringField('fileTitle', cv.Title);
+                }
+                body.writeStringField('oldContentDocumentId', cv.ContentDocumentId);
+                if(cv.FirstPublishLocationId != null) {
+                	body.writeStringField('oldFirstPublishLocationId', cv.FirstPublishLocationId);
+                }
+				body.writeStringField('Comment', 'From beneath his slouched hat Ahab dropped a tear into the sea; nor did all the Pacific contain such wealth as that one wee drop.');
+        	body.writeEndObject();
+
+        	RestResponse res = RestContext.response;
+        if(res != null) {
+                res.addHeader('Content-Type', 'application/json');
+                res.responseBody = Blob.valueOf(body.getAsString());
+                res.statusCode = 200;
+        }
+    }
+ 
+    
+}
