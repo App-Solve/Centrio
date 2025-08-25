@@ -1,0 +1,14 @@
+/*
+Description : mock class for service call out
+Author: SINDHUR
+Date Of Creation: 1-2-2018
+Modification Date:1-2-2018
+*/
+global class TestWebserviceMock implements  HttpCalloutMock {
+    global HTTPResponse respond(HTTPRequest req) {
+        HttpResponse res = new HttpResponse();
+        res.setBody('{"results" : [{"address_components" : [{"long_name" : "500019","short_name" : "500019","types" : [ "postal_code" ]},{"long_name" : "Hyderabad","short_name" : "Hyderabad","types" : [ "locality", "political" ]},{"long_name" : "Telangana","short_name" : "Telangana","types" : [ "administrative_area_level_1", "political" ]},{"long_name" : "India","short_name" : "IN","types" : [ "country", "political" ]}],"formatted_address" : "Hyderabad, Telangana 500019, India","geometry" : {"bounds" : {"northeast" : {"lat" : 17.4932964,"lng" : 78.3377965},"southwest" : {"lat" : 17.4333266,"lng" : 78.26938059999999}},"location" : {"lat" : 17.4796537,"lng" : 78.31976010000001},"location_type" : "APPROXIMATE","viewport" : {"northeast" : {"lat" : 17.4932964,"lng" : 78.3377965},"southwest" : {"lat" : 17.4333266,"lng" : 78.26938059999999}}},"partial_match" : true,"place_id" : "ChIJ43Zr4teSyzsRISBEaNFRPrY","types" : [ "postal_code" ]}],"status" : "OK"}');
+        res.setStatusCode(200);
+        return res;
+}
+}
