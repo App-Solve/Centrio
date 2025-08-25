@@ -1,0 +1,372 @@
+/*
+Description : Controller class to find all the Addresses with location details.
+Author: Sindhur
+Date Of Creation: 11-12-2017
+Modification History: 1.Changed the SOQL Statement to query record with location details
+*/
+public class GeoFinalCntrl {
+    public static string RECORDTYPE_ID = null;
+    /* 
+* return : List of MapAddrWpr Objects
+*/
+    @AuraEnabled
+    public static MapListsWpr createWprlst() {
+        System.debug('GeoMapsCntrl');
+        RecordType objAccRecord = [SELECT Id FROM RecordType WHERE Sobjecttype='Account' AND IsActive = true and Name='Property' LIMIT 1];
+        if(objAccRecord != null){
+            RECORDTYPE_ID = objAccRecord.Id;
+        }//Get RecordType ID
+        System.debug('recordid'+RECORDTYPE_ID);
+        // SELECT Property__c, Id, StageName FROM Opportunity where Property__c!=null 
+        MapListsWpr objTwoWrap=new MapListsWpr();
+        List<MapAddrWpr> addrWprLst = new List<MapAddrWpr>();
+        List<StageWrapCls> StagWprLst=new List<StageWrapCls>();
+        List<Account> accLst = [Select Id,ParentId,Parent.Name,
+                                Name,
+                                Geo_Location__Latitude__s,
+                                Geo_Location__Longitude__s,
+                                BillingCity,
+                                BillingState,
+                                BillingCountry,
+                                BillingPostalCode,
+                                BillingStreet,Cooling__c,Heating__c,Cooling_2__c, Heating_2__c,Power_2__c,
+                                (SELECT ID, StageName, Name,Property__c,Property__r.Name FROM OpportunityProperties__r where Property__c!=null),
+                                (Select ID,ContractNumber From Contracts)
+                                FROM Account
+                                Where Geo_Location__Latitude__s != null AND Geo_Location__Longitude__s !=null
+                                And RecordTypeId = :RECORDTYPE_ID];//Get the location from Account object having Opportunities and Contracts.
+        
+        for(Account acc : accLst) {
+            MapAddrWpr wprObj = new MapAddrWpr();
+            //wprObj.AccName = acc.Name;
+            wprObj.latitude = acc.Geo_Location__Latitude__s;
+            wprObj.longitude = acc.Geo_Location__Longitude__s;
+            wprObj.Billingcity = acc.BillingCity;
+            String geoAddress = '';
+            if(acc.BillingStreet != null)
+                geoAddress += acc.BillingStreet + ', ';
+            if(acc.BillingCity != null)
+            {
+                geoAddress += acc.BillingCity + ', ';
+                wprObj.OppCity = acc.BillingCity;
+            }                
+            if(acc.BillingState != null)
+                geoAddress += acc.BillingState + ', ';
+            if(acc.BillingCountry != null)
+                geoAddress += acc.BillingCountry + ', ';
+            if(acc.BillingPostalCode != null)
+                geoAddress += acc.BillingPostalCode;
+            if(acc.OpportunityProperties__r !=null && !acc.OpportunityProperties__r.isEmpty()){
+                wprObj.OppName = acc.OpportunityProperties__r[0].Name; 
+                wprObj.Oppstage = acc.OpportunityProperties__r[0].StageName;
+                //Get the Cooling, Heating and Power columns having "Prospect or Customer".
+                if(acc.Cooling_2__c!=null){
+                    wprObj.CoolingProCus=acc.Cooling_2__c;
+                }
+                else{
+                    wprObj.CoolingProCus='none';
+                }
+                if(acc.Heating_2__c!=null){
+                    wprObj.HeatingProCus=acc.Heating_2__c;
+                }
+                else{
+                    wprObj.HeatingProCus='none';
+                }
+                if(acc.Power_2__c!=null){
+                    wprObj.PowerProCus=acc.Power_2__c;
+                }
+                else{
+                    wprObj.PowerProCus='none';
+                }
+                
+                //Assign Pin color to green which are opportunities stage other than "commissioned".
+                if(acc.OpportunityProperties__r[0].StageName!='Commissioned'){
+                    wprObj.pinColor='green';
+                }
+                else{
+                    //If Stage is Commissioned.
+                    //Pin Card Change-Start
+                    if(acc.Cooling_2__c=='Customer' && acc.Heating_2__c==null && acc.Power_2__c==null){
+                        wprObj.pinColor='blue';
+                        wprObj.Criteria='Cooling';
+                        wprObj.CoolingProCus='Customer';
+                    }else if(acc.Cooling_2__c==null && acc.Heating_2__c=='Customer' && acc.Power_2__c==null){
+                        wprObj.pinColor='red';
+                        wprObj.Criteria='Heating';
+                        system.debug('entered'+wprObj.Criteria);
+                        wprObj.HeatingProCus='Customer';
+                    }else if(acc.Cooling_2__c=='Customer' && acc.Heating_2__c=='Customer' && acc.Power_2__c==null){
+                        wprObj.pinColor='violet';
+                        wprObj.Criteria='Cooling and Heating';
+                        wprObj.CoolingProCus='Customer';
+                        wprObj.HeatingProCus='Customer';
+                    }
+                    else if(acc.Cooling_2__c=='Prospect' && acc.Heating_2__c==null){
+                        wprObj.pinColor='blue';
+                        wprObj.Criteria='Cooling';
+                        wprObj.CoolingProCus='Prospect';
+                    }else if(acc.Cooling_2__c==null && acc.Heating_2__c=='Prospect'){
+                        wprObj.pinColor='red';
+                        wprObj.Criteria='Heating';
+                        wprObj.HeatingProCus='Prospect';
+                    }else if(acc.Cooling_2__c=='Prospect' && acc.Heating_2__c=='Prospect'){
+                        wprObj.pinColor='violet';
+                        wprObj.Criteria='Cooling and Heating';
+                        wprObj.CoolingProCus='Prospect';
+                        wprObj.HeatingProCus='Prospect';
+                    }
+                    else if(acc.Cooling_2__c=='Customer' && acc.Heating_2__c=='Prospect'){
+                        wprObj.pinColor='violet';
+                        wprObj.Criteria='Cooling and Heating';
+                        wprObj.CoolingProCus='Customer';
+                        wprObj.HeatingProCus='Prospect';
+                    }
+                    else if(acc.Cooling_2__c=='Prospect' && acc.Heating_2__c=='Customer'){
+                        wprObj.pinColor='violet';
+                        wprObj.Criteria='Cooling and Heating';
+                        wprObj.CoolingProCus='Prospect';
+                        wprObj.HeatingProCus='Customer';
+                    }
+                    else if(acc.Power_2__c=='Customer'&& acc.Heating_2__c==null && acc.Cooling_2__c==null){
+                        wprObj.pinColor='black';
+                        wprObj.Criteria='Power';
+                        wprObj.CoolingProCus='none';
+                        wprObj.HeatingProCus='none';
+                        wprObj.PowerProCus='Customer';
+                    }
+                    else if(acc.Power_2__c=='Customer' && acc.Heating_2__c=='Customer' && acc.Cooling_2__c==null){
+                        wprObj.pinColor='red';
+                        wprObj.Criteria='Power';
+                        wprObj.CoolingProCus='none';
+                        wprObj.HeatingProCus='Customer';
+                        wprObj.PowerProCus='Customer';
+                         System.debug('pin in power'+wprObj.Criteria);
+                    }
+                    else if(acc.Power_2__c=='Customer' && acc.Heating_2__c==null && acc.Cooling_2__c=='Customer'){
+                        wprObj.pinColor='blue';
+                        wprObj.Criteria='Power';
+                        wprObj.CoolingProCus='Customer';
+                        wprObj.HeatingProCus='none';
+                        wprObj.PowerProCus='Customer';
+                    }
+                    else if(acc.Power_2__c=='Customer' && acc.Heating_2__c=='Customer' && acc.Cooling_2__c=='Customer'){
+                        wprObj.pinColor='blue';
+                        wprObj.Criteria='Power';
+                        wprObj.CoolingProCus='Customer';
+                        wprObj.HeatingProCus='Customer';
+                        wprObj.PowerProCus='Customer';
+                    }
+                    else{
+                        wprObj.pinColor='none';
+                        wprObj.Criteria='none';
+                        wprObj.CoolingProCus='none';
+                        wprObj.HeatingProCus='none';
+                        wprObj.PowerProCus='none';
+                    }
+                    System.debug('end pin'+wprObj.Criteria);
+                    //Pin Card Change-End 
+                }
+                if(acc.Cooling_2__c=='Prospect' && acc.Heating_2__c==null){
+                    // wprObj.pinColor='blue';
+                    wprObj.Criteria='Cooling';
+                }else if(acc.Cooling_2__c==null && acc.Heating_2__c=='Prospect'){
+                    //  wprObj.pinColor='red';
+                    wprObj.Criteria='Heating';
+                }else if(acc.Cooling_2__c=='Prospect' && acc.Heating_2__c=='Prospect'){
+                    // wprObj.pinColor='violet';
+                    wprObj.Criteria='Cooling and Heating';
+                }else if(acc.Power_2__c=='Customer'){
+                     wprObj.Criteria='Power';
+                }
+                else{
+                    // wprObj.pinColor='green';
+                    wprObj.Criteria='none';
+                }
+                
+            }else{
+                wprObj.OppName = 'none';
+                wprObj.Oppstage ='none';
+                wprObj.pinColor = 'red';
+                wprObj.ParentID='none';
+                wprObj.ParentName='none';
+            }
+            if(acc.Contracts !=null && !acc.Contracts.isEmpty()){
+                List<Contract> objContract=acc.Contracts;
+                wprObj.Contractlst=objContract;
+                system.debug('Contracts:'+wprObj.Contractlst);
+            }
+            else{
+                wprObj.Contractlst=null;
+                wprObj.AcContractNumber='none';
+                wprObj.AcContractID ='none';
+            }
+            //Pin Card Change-Start
+            if(acc.Cooling_2__c=='Customer' && acc.Heating_2__c==null && acc.Power_2__c==null){
+                //wprObj.pinColor='blue';
+                wprObj.Criteria='Cooling';
+                wprObj.CoolingProCus='Customer';
+            }else if(acc.Cooling_2__c==null && acc.Heating_2__c=='Customer' && acc.Power_2__c==null){
+                //wprObj.pinColor='red';
+                wprObj.Criteria='Heating';
+                wprObj.HeatingProCus='Customer';
+            }else if(acc.Cooling_2__c=='Customer' && acc.Heating_2__c=='Customer' && acc.Power_2__c==null){
+                //wprObj.pinColor='violet';
+                wprObj.Criteria='Cooling and Heating';
+                wprObj.CoolingProCus='Customer';
+                wprObj.HeatingProCus='Customer';
+            }
+            else if(acc.Cooling_2__c=='Prospect' && acc.Heating_2__c==null){
+                //wprObj.pinColor='blue';
+                wprObj.Criteria='Cooling';
+                wprObj.CoolingProCus='Prospect';
+            }else if(acc.Cooling_2__c==null && acc.Heating_2__c=='Prospect'){
+                //wprObj.pinColor='red';
+                wprObj.Criteria='Heating';
+                wprObj.HeatingProCus='Prospect';
+            }else if(acc.Cooling_2__c=='Prospect' && acc.Heating_2__c=='Prospect'){
+                //wprObj.pinColor='violet';
+                wprObj.Criteria='Cooling and Heating';
+                wprObj.CoolingProCus='Prospect';
+                wprObj.HeatingProCus='Prospect';
+            }
+            else if(acc.Cooling_2__c=='Customer' && acc.Heating_2__c=='Prospect'){
+                //wprObj.pinColor='violet';
+                wprObj.Criteria='Cooling and Heating';
+                wprObj.CoolingProCus='Customer';
+                wprObj.HeatingProCus='Prospect';
+            }
+            else if(acc.Cooling_2__c=='Prospect' && acc.Heating_2__c=='Customer'){
+                //wprObj.pinColor='violet';
+                wprObj.Criteria='Cooling and Heating';
+                wprObj.CoolingProCus='Prospect';
+                wprObj.HeatingProCus='Customer';
+            }
+            else if(acc.Power_2__c=='Customer'&& acc.Heating_2__c==null && acc.Cooling_2__c==null){
+                wprObj.pinColor='black';
+                wprObj.Criteria='Power';
+                wprObj.CoolingProCus='none';
+                wprObj.HeatingProCus='none';
+                wprObj.PowerProCus='Customer';
+            }
+            else if(acc.Power_2__c=='Customer' && acc.Heating_2__c=='Customer' && acc.Cooling_2__c==null){
+                wprObj.pinColor='red';
+                wprObj.Criteria='Power';
+                wprObj.CoolingProCus='none';
+                wprObj.HeatingProCus='Customer';
+                wprObj.PowerProCus='Customer';
+            }
+            else if(acc.Power_2__c=='Customer' && acc.Heating_2__c==null && acc.Cooling_2__c=='Customer'){
+                wprObj.pinColor='blue';
+                wprObj.Criteria='Power';
+                wprObj.CoolingProCus='Customer';
+                wprObj.HeatingProCus='none';
+                wprObj.PowerProCus='Customer';
+            }
+            else if(acc.Power_2__c=='Customer' && acc.Heating_2__c=='Customer' && acc.Cooling_2__c=='Customer'){
+                wprObj.pinColor='blue';
+                wprObj.Criteria='Power';
+                wprObj.CoolingProCus='Customer';
+                wprObj.HeatingProCus='Customer';
+                wprObj.PowerProCus='Customer';
+            }
+            
+            else{
+                //wprObj.pinColor='none';
+                wprObj.Criteria='none';
+                wprObj.CoolingProCus='none';
+                wprObj.HeatingProCus='none';
+                wprObj.PowerProCus='none';
+            }
+            //Pin Card Change-End            
+             System.debug('end pin2'+wprObj.Criteria);
+            wprObj.description = geoAddress;
+            //wprObj.AccounID= acc.Id;
+            
+            if(acc.ParentId==null){
+                wprObj.ParentID=''; 
+            }else{
+                wprObj.ParentID= acc.ParentId;
+            }
+            if(acc.Parent.Name==null){
+                wprObj.ParentName=''; 
+            }else{
+                wprObj.ParentName= acc.Parent.Name;
+            }
+            if(acc.OpportunityProperties__r !=null && !acc.OpportunityProperties__r.isEmpty()){
+                wprObj.OppurID= acc.OpportunityProperties__r[0].id;
+                Account objattr =acc.OpportunityProperties__r[0].Property__r;
+                if(objattr.Name==null){
+                    wprObj.AccName = ''; 
+                }else{
+                    wprObj.AccName = objattr.Name; 
+                }
+                if(acc.OpportunityProperties__r[0].Property__c==null){
+                    wprObj.AccounID='';
+                }
+                else{
+                    wprObj.AccounID=acc.OpportunityProperties__r[0].Property__c;
+                }
+                // System.debug('attr:'+objattr.Name);
+                
+                // wprObj.ParentID=acc.OpportunityProperties__r[0].Property__c;
+            }
+            addrWprLst.add(wprObj);
+        }
+        objTwoWrap.lstMapWpr=addrWprLst;        
+        //AggregateResult[] groupedResults = [Select BillingCity FROM Account group by BillingCity];
+        AggregateResult[] groupedResults = [SELECT BillingCity FROM Account where RecordTypeId = :RECORDTYPE_ID group by BillingCity];
+        List<String> strCity=new List<String>();
+        for(AggregateResult ar:groupedResults)
+        {
+            strCity.add(String.valueOf(ar.get('BillingCity')));
+        }        
+        objTwoWrap.lstCity=strCity;
+        
+        //Get the drawn map(JSON) from DrawMap object
+        DrawMapTbl__c objDrawMap=new DrawMapTbl__c();
+        String myJsonString;
+        Integer JScount;
+        JScount=[select count() from DrawMapTbl__c];
+        if(JScount>0){
+            objDrawMap=[select JsonString__c from DrawMapTbl__c LIMIT 1];
+            objTwoWrap.GeoJson=objDrawMap.JsonString__c;
+            // 1.  classes/GeoFinalCntrl.cls -- Error: Illegal assignment from DrawMapTbl__c to String (line 332, column 13)
+            // objTwoWrap.GeoJson=objDrawMap;
+        }        
+        //Opportunity stage values
+        Schema.DescribeFieldResult fieldResult = Opportunity.StageName.getDescribe();
+        List<Schema.PicklistEntry> Stages = fieldResult.getPicklistValues();
+        for(Schema.PicklistEntry StageNames:Stages){
+            StageWrapCls StageWrpObj=new StageWrapCls();
+            StageWrpObj.StageName=StageNames.getValue();
+            StagWprLst.add(StageWrpObj);            
+        }
+        objTwoWrap.lstStages=StagWprLst;
+        System.debug(''+objTwoWrap);
+        return objTwoWrap;
+    }
+    
+    @AuraEnabled
+    public static void createWprlstInput(String strJson) {
+        system.debug('test'+strJson);
+        if(!string.isEmpty(strJson))
+        {
+            //Save the drawn map(JSON) to DrawMap object
+            Integer JScountInsert;
+            JScountInsert=[select count() from DrawMapTbl__c];
+            if(JScountInsert>0){
+                DrawMapTbl__c objDrawMap=[select JsonString__c from DrawMapTbl__c LIMIT 1];
+                objDrawMap.JsonString__c=strJson;
+                update objDrawMap;
+                system.debug('Updated');
+            }
+            else
+            {
+                DrawMapTbl__c objInserJSon= new DrawMapTbl__c();
+                objInserJSon.JsonString__c=strJson;
+                insert objInserJSon;
+                system.debug('inserted');
+            }         
+        }        
+    }
+}
