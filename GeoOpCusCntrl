@@ -1,0 +1,556 @@
+/*
+Description : controller to get opportunities and accounts
+Author: Sindhur
+Date Of Creation: 1-12-2018
+*/
+public without sharing class GeoOpCusCntrl {
+    public static Set<String> RECORDTYPE_ID = null;
+    
+    /*
+*	Description : get Account property record type id
+*/
+    public static Set<String> getAccountRTs(){
+        Set<String> accRecordTypes = new Set<String>();
+        Schema.DescribeSObjectResult R = Account.SObjectType.getDescribe();
+        List<Schema.RecordTypeInfo> RT = R.getRecordTypeInfos();
+        for( Schema.RecordTypeInfo recordType : RT ) {
+            /** Check if the recordtype is visible for the current user or not. **/
+            if(recordType.isAvailable()) { 		 
+                if(recordType.Name!='Master' && recordType.Name.contains('Property')) {
+                    accRecordTypes.add(recordType.getRecordTypeId());
+                }
+            }
+        }
+        return accRecordTypes;
+    }
+    
+    /*
+*	Description : get Opportunity record types ids
+*/
+    public static List<String> getOpportunityRTs(){
+        List<String> oppRecordTypes = new List<String>();
+        Schema.DescribeSObjectResult R = Opportunity.SObjectType.getDescribe();
+        List<Schema.RecordTypeInfo> RT = R.getRecordTypeInfos();
+        for( Schema.RecordTypeInfo recordType : RT ) {
+            /** Check if the recordtype is visible for the current user or not. **/
+            if(recordType.isAvailable()) { 		 
+                if(recordType.Name!='Master') {
+                    oppRecordTypes.add(recordType.Name);
+                }
+            }
+        }
+        return oppRecordTypes;
+    }
+    
+    /*
+*	Description: return values of M_A_Deal_Type__c picklist if that field is visible to current user
+*/
+    public static List<String> getMADealTypes(){		
+        List<String> oppDealTypes = new List<String>();
+        Schema.DescribeFieldResult fieldResult = Opportunity.M_A_Deal_Type__c.getDescribe();
+        if(fieldResult.isAccessible()){
+            List<Schema.PicklistEntry> dealTypes = fieldResult.getPicklistValues();
+            for(Schema.PicklistEntry dealName:dealTypes){
+                oppDealTypes.add(dealName.getValue());            
+            }
+        }
+        return oppDealTypes;
+    }
+    
+    /*
+*	Description : get All Opportunity and their related propeties detail and create a wrapper to display pins on map	
+*/
+    @AuraEnabled
+    public static MapListsWpr createWprlst(){
+        MapListsWpr objTwoWrap = new MapListsWpr();
+        List<MapAddrWpr> addrWprLst = new List<MapAddrWpr>();
+        List<CusAddrWpr> CusWprLst = new List<CusAddrWpr>();
+        List<StageWrapCls> StagWprLst = new List<StageWrapCls>();
+        
+        RECORDTYPE_ID = getAccountRTs();
+        
+        //Get the location from Account object having Opportunities and Contracts.
+        List<Opportunity> accLst = [Select Property__c,
+                                    Property__r.ParentId,
+                                    Property__r.Parent.Name,
+                                    Property__r.Name, 
+                                    Property__r.RecordType.Name,
+                                    Property__r.Geo_Location__Latitude__s,
+                                    Property__r.Geo_Location__Longitude__s,
+                                    Property__r.BillingCity,
+                                    Property__r.BillingState,
+                                    Property__r.BillingCountry,
+                                    Property__r.BillingPostalCode,
+                                    Property__r.BillingStreet,
+                                    Property__r.Cooling_2__c, 
+                                    Property__r.Heating_2__c,
+                                    Property__r.Power_2__c,
+                                    (Select Id,ContractNumber FROM Contracts__r),
+                                    Id, 
+                                    RecordType.Name, 
+                                    StageName, 
+                                    Name,                                
+                                    M_A_Deal_Type__c,
+                                    Type_of_Building_2__c,
+                                    Size_sqft__c,
+                                    NextStep,
+                                    Building_Photo__c,
+                                    Services__c,
+                                    Generation__c,
+                                    System_Location__c,
+                                    System_Location__r.Name,
+                                    Nameplate_Tons__c,
+                                    Actual_Expected_Tons__c,
+                                    Nameplate_MBH__c,
+                                    Actual_Expected_MBH__c FROM Opportunity
+                                    WHERE Property__c!=null 
+                                    AND StageName!='Commissioned' 
+                                    AND Property__r.Geo_Location__Latitude__s != null 
+                                    AND Property__r.Geo_Location__Longitude__s !=null
+                                    AND Property__r.RecordTypeId IN: RECORDTYPE_ID
+                                    And Property__r.Type='Prospect' Order by LastModifiedDate Desc];
+        
+        List<Opportunity> cusLst = [Select Property__c,
+                                    Property__r.ParentId,
+                                    Property__r.Parent.Name,
+                                    Property__r.Name,
+                                    Property__r.RecordType.Name,
+                                    Property__r.Geo_Location__Latitude__s,
+                                    Property__r.Geo_Location__Longitude__s,
+                                    Property__r.BillingCity,
+                                    Property__r.BillingState,
+                                    Property__r.BillingCountry,
+                                    Property__r.BillingPostalCode,
+                                    Property__r.BillingStreet,
+                                    Property__r.Cooling_2__c,
+                                    Property__r.Heating_2__c,
+                                    Property__r.Power_2__c,
+                                    (Select Id,ContractNumber FROM Contracts__r),
+                                    Id,
+                                    RecordType.Name,
+                                    StageName,
+                                    Name,
+                                    M_A_Deal_Type__c,
+                                    Type_of_Building_2__c,
+                                    Size_sqft__c,
+                                    NextStep,
+                                    Building_Photo__c,
+                                    Services__c,
+                                    Generation__c,
+                                    System_Location__c,
+                                    System_Location__r.Name,
+                                    Nameplate_Tons__c,
+                                    Actual_Expected_Tons__c,
+                                    Nameplate_MBH__c,
+                                    Actual_Expected_MBH__c FROM Opportunity
+                                    WHERE Property__c!=null 
+                                    AND StageName='Commissioned'                                
+                                    AND Property__r.Geo_Location__Latitude__s != null 
+                                    AND Property__r.Geo_Location__Longitude__s !=null
+                                    AND Property__r.RecordTypeId IN: RECORDTYPE_ID
+                                    And Property__r.Type='Customer' 
+                                    Order by LastModifiedDate Desc];
+        
+        if(accLst!=null && !accLst.isEmpty()){
+            MapAddrWpr wprObj;
+            for(Opportunity opp:accLst){
+                wprObj = new MapAddrWpr();
+                wprObj.latitude = opp.Property__r.Geo_Location__Latitude__s;
+                wprObj.longitude = opp.Property__r.Geo_Location__Longitude__s;
+                wprObj.Billingcity = opp.Property__r.BillingCity;
+                String geoAddress = '';
+                if(opp.Property__r.BillingStreet != null)
+                    geoAddress += opp.Property__r.BillingStreet + ', ';
+                if(opp.Property__r.BillingCity != null){
+                    geoAddress += opp.Property__r.BillingCity + ', ';
+                    wprObj.OppCity = opp.Property__r.BillingCity;
+                }
+                if(opp.Property__r.BillingState != null)
+                    geoAddress += opp.Property__r.BillingState + ', ';
+                if(opp.Property__r.BillingCountry != null)
+                    geoAddress += opp.Property__r.BillingCountry + ', ';
+                if(opp.Property__r.BillingPostalCode != null)
+                    geoAddress += opp.Property__r.BillingPostalCode;
+                
+                wprObj.OppName = opp.Name; 
+                wprObj.Oppstage = opp.StageName;
+                wprObj.oppRTName = opp.RecordType.Name;
+                wprObj.oppDealType = opp.M_A_Deal_Type__c;
+                wprObj.oppBuildingType = (opp.Type_of_Building_2__c!=null ? opp.Type_of_Building_2__c : '');
+                wprObj.oppSize = (opp.Size_sqft__c!=null ? opp.Size_sqft__c : null);
+                wprObj.oppNextStep = (opp.NextStep!=null ? opp.NextStep : '');
+                wprObj.oppBuildingPhoto = (opp.Building_Photo__c!=null ? opp.Building_Photo__c : '');
+                wprObj.oppServices = (opp.Services__c!=null ? opp.Services__c : '');
+                wprObj.oppGeneration = (opp.Generation__c!=null ? opp.Generation__c : '');
+                wprObj.oppSystemLocation = (opp.System_Location__c!=null ? opp.System_Location__r.Name : '');
+                wprObj.oppCoolingLoadNameplate = opp.Nameplate_Tons__c;
+                wprObj.oppCoolingLoadActual = opp.Actual_Expected_Tons__c;
+                wprObj.oppHeatingLoadNameplate = opp.Nameplate_MBH__c;
+                wprObj.oppHeatingLoadActual = opp.Actual_Expected_MBH__c;
+                
+                if(wprObj.oppRTName=='Capacity'){
+                    wprObj.pinColor='marker_green_star';
+                } else {
+                    wprObj.pinColor='marker_green';
+                }
+                
+                //Get the Cooling, Heating and Power columns having "Prospect or Customer".
+                if(opp.Property__r.Cooling_2__c!=null){
+                    wprObj.CoolingProCus = opp.Property__r.Cooling_2__c;
+                } else {
+                    wprObj.CoolingProCus = 'none';
+                }
+                if(opp.Property__r.Heating_2__c!=null){
+                    wprObj.HeatingProCus = opp.Property__r.Heating_2__c;
+                } else {
+                    wprObj.HeatingProCus = 'none';
+                }
+                if(opp.Property__r.Power_2__c!=null){
+                    wprObj.PowerProCus = opp.Property__r.Power_2__c;
+                } else {
+                    wprObj.PowerProCus = 'none';
+                }
+                
+                if(opp.Property__r.Cooling_2__c=='Customer' && opp.Property__r.Heating_2__c==null && opp.Property__r.Power_2__c==null){
+                    wprObj.Criteria='Cooling';
+                    wprObj.CoolingProCus='Customer';
+                } else if(opp.Property__r.Cooling_2__c==null && opp.Property__r.Heating_2__c=='Customer' && opp.Property__r.Power_2__c==null){
+                    wprObj.Criteria='Heating';
+                    wprObj.HeatingProCus='Customer';
+                } else if(opp.Property__r.Cooling_2__c=='Customer' && opp.Property__r.Heating_2__c=='Customer' && opp.Property__r.Power_2__c==null){
+                    wprObj.Criteria='Cooling and Heating';
+                    wprObj.CoolingProCus='Customer';
+                    wprObj.HeatingProCus='Customer';
+                } else if(opp.Property__r.Cooling_2__c=='Prospect' && opp.Property__r.Heating_2__c==null){
+                    wprObj.Criteria='Cooling';
+                    wprObj.CoolingProCus='Prospect';
+                } else if(opp.Property__r.Cooling_2__c==null && opp.Property__r.Heating_2__c=='Prospect'){
+                    wprObj.Criteria='Heating';
+                    wprObj.HeatingProCus='Prospect';
+                } else if(opp.Property__r.Cooling_2__c=='Prospect' && opp.Property__r.Heating_2__c=='Prospect'){
+                    wprObj.Criteria='Cooling and Heating';
+                    wprObj.CoolingProCus='Prospect';
+                    wprObj.HeatingProCus='Prospect';
+                } else if(opp.Property__r.Cooling_2__c=='Customer' && opp.Property__r.Heating_2__c=='Prospect'){
+                    wprObj.Criteria='Cooling and Heating';
+                    wprObj.CoolingProCus='Customer';
+                    wprObj.HeatingProCus='Prospect';
+                } else if(opp.Property__r.Cooling_2__c=='Prospect' && opp.Property__r.Heating_2__c=='Customer'){
+                    wprObj.Criteria='Cooling and Heating';
+                    wprObj.CoolingProCus='Prospect';
+                    wprObj.HeatingProCus='Customer';
+                } else if(opp.Property__r.Power_2__c=='Customer'&& opp.Property__r.Heating_2__c==null && opp.Property__r.Cooling_2__c==null){
+                    wprObj.Criteria='Power';
+                    wprObj.CoolingProCus='none';
+                    wprObj.HeatingProCus='none';
+                    wprObj.PowerProCus='Customer';
+                } else if(opp.Property__r.Power_2__c=='Customer' && opp.Property__r.Heating_2__c=='Customer' && opp.Property__r.Cooling_2__c==null){
+                    wprObj.Criteria='Power';
+                    wprObj.CoolingProCus='none';
+                    wprObj.HeatingProCus='Customer';
+                    wprObj.PowerProCus='Customer';
+                    System.debug('pin in power'+wprObj.Criteria);
+                } else if(opp.Property__r.Power_2__c=='Customer' && opp.Property__r.Heating_2__c==null && opp.Property__r.Cooling_2__c=='Customer'){
+                    wprObj.Criteria='Power';
+                    wprObj.CoolingProCus='Customer';
+                    wprObj.HeatingProCus='none';
+                    wprObj.PowerProCus='Customer'; 
+                } else if(opp.Property__r.Power_2__c=='Customer' && opp.Property__r.Heating_2__c=='Customer' && opp.Property__r.Cooling_2__c=='Customer'){
+                    wprObj.Criteria='Power';
+                    wprObj.CoolingProCus='Customer';
+                    wprObj.HeatingProCus='Customer';
+                    wprObj.PowerProCus='Customer';
+                } else {
+                    wprObj.Criteria='none';
+                    wprObj.CoolingProCus='none';
+                    wprObj.HeatingProCus='none';
+                    wprObj.PowerProCus='none';
+                }
+                
+                System.debug('end pin'+wprObj.Criteria);
+                if(opp.Property__r.Cooling_2__c=='Prospect' && opp.Property__r.Heating_2__c==null){
+                    wprObj.Criteria='Cooling';
+                } else if(opp.Property__r.Cooling_2__c==null && opp.Property__r.Heating_2__c=='Prospect'){
+                    wprObj.Criteria='Heating';
+                } else if(opp.Property__r.Cooling_2__c=='Prospect' && opp.Property__r.Heating_2__c=='Prospect'){
+                    wprObj.Criteria='Cooling and Heating';
+                } else if(opp.Property__r.Power_2__c=='Customer'){
+                    wprObj.Criteria='Power';
+                } else {
+                    wprObj.Criteria='none';
+                }
+                
+                if(opp.Contracts__r !=null && !opp.Contracts__r.isEmpty()){
+                    wprObj.AcContractNumber = opp.Contracts__r[0].ContractNumber;                
+                    wprObj.AcContractID = opp.Contracts__r[0].ID;
+                    List<Contract> objContract = opp.Contracts__r;
+                    wprObj.Contractlst = objContract;
+                } else {
+                    wprObj.AcContractNumber='none';
+                    wprObj.AcContractID ='none';
+                }  
+                
+                System.debug('end pin2'+wprObj.Criteria);
+                wprObj.description = geoAddress;
+                if(opp.Property__r.ParentId==null){
+                    wprObj.ParentID = ''; 
+                } else {
+                    wprObj.ParentID = opp.Property__r.ParentId;
+                }
+                if(opp.Property__r.Parent.Name==null){
+                    wprObj.ParentName = ''; 
+                } else {
+                    wprObj.ParentName = opp.Property__r.Parent.Name;
+                }
+                
+                //if(acc.OpportunityProperties__r !=null && !acc.OpportunityProperties__r.isEmpty()){
+                wprObj.OppurID = opp.id;
+                //Account objattr = acc.OpportunityProperties__r[0].Property__r;
+                if(opp.Property__r.Name==null){
+                    wprObj.AccName = ''; 
+                } else {
+                    wprObj.AccName = opp.Property__r.Name; 
+                }
+                if(opp.Property__c == null){
+                    wprObj.AccounID = '';
+                } else {
+                    wprObj.AccounID = opp.Property__c;
+                }
+                
+                if(wprObj.oppRTName!='Capacity' && wprObj.Oppstage=='Lost'){				
+                    wprObj.pinColor='marker_dark1_green';			
+                }
+                if(wprObj.Oppstage == 'Legal Drafting' || wprObj.Oppstage == 'Contracted' || wprObj.Oppstage == 'In Construction') {
+                    wprObj.pinColor='Marker_Yellow_Brighter';
+                }
+                addrWprLst.add(wprObj);        	
+            }
+        }
+        if(cusLst!=null && !cusLst.isEmpty()){
+            CusAddrWpr wprObj;
+            for(Opportunity opp : cusLst) {
+                String stCoolPrCs = 'none';
+                String stHeatPrCs = 'none';
+                String stPowerPrCs = 'none';
+                wprObj = new CusAddrWpr();
+                wprObj.latitude = opp.Property__r.Geo_Location__Latitude__s;
+                wprObj.longitude = opp.Property__r.Geo_Location__Longitude__s;
+                wprObj.Billingcity = opp.Property__r.BillingCity;
+                String geoAddress = '';
+                if(opp.Property__r.BillingStreet != null)
+                    geoAddress += opp.Property__r.BillingStreet + ', ';
+                if(opp.Property__r.BillingCity != null) {
+                    geoAddress += opp.Property__r.BillingCity + ', ';
+                    wprObj.CusCity = opp.Property__r.BillingCity;
+                }                
+                if(opp.Property__r.BillingState != null)
+                    geoAddress += opp.Property__r.BillingState + ', ';
+                if(opp.Property__r.BillingCountry != null)
+                    geoAddress += opp.Property__r.BillingCountry + ', ';
+                if(opp.Property__r.BillingPostalCode != null)
+                    geoAddress += opp.Property__r.BillingPostalCode;                
+                
+                wprObj.OppName = opp.Name; 
+                wprObj.Oppstage = opp.StageName;
+                wprObj.oppRTName = opp.RecordType.Name;
+                wprObj.oppDealType = opp.M_A_Deal_Type__c;
+                wprObj.oppBuildingType = (opp.Type_of_Building_2__c!=null ? opp.Type_of_Building_2__c : '');
+                wprObj.oppSize = (opp.Size_sqft__c!=null ? opp.Size_sqft__c : null);
+                wprObj.oppNextStep = (opp.NextStep!=null ? opp.NextStep : '');
+                wprObj.oppBuildingPhoto = (opp.Building_Photo__c!=null ? opp.Building_Photo__c : '');
+                wprObj.oppBuildingPhoto = (opp.Building_Photo__c!=null ? opp.Building_Photo__c : '');
+                wprObj.oppServices = (opp.Services__c!=null ? opp.Services__c : '');
+                wprObj.oppGeneration = (opp.Generation__c!=null ? opp.Generation__c : '');
+                wprObj.oppSystemLocation = (opp.System_Location__c!=null ? opp.System_Location__r.Name : '');
+                wprObj.oppCoolingLoadNameplate = opp.Nameplate_Tons__c;
+                wprObj.oppCoolingLoadActual = opp.Actual_Expected_Tons__c;
+                wprObj.oppHeatingLoadNameplate = opp.Nameplate_MBH__c;
+                wprObj.oppHeatingLoadActual = opp.Actual_Expected_MBH__c;
+                //Get the Cooling, Heating and Power columns having "Prospect or Customer".
+                if(opp.Property__r.Cooling_2__c!=null){
+                    wprObj.CoolingProCus = opp.Property__r.Cooling_2__c;
+                    stCoolPrCs = opp.Property__r.Cooling_2__c;
+                } else {
+                    wprObj.CoolingProCus = 'none';
+                }
+                if(opp.Property__r.Heating_2__c!=null){
+                    wprObj.HeatingProCus = opp.Property__r.Heating_2__c;
+                    stHeatPrCs = opp.Property__r.Heating_2__c;
+                } else {
+                    wprObj.HeatingProCus = 'none';
+                }
+                if(opp.Property__r.Power_2__c!=null){
+                    wprObj.PowerProCus = opp.Property__r.Power_2__c;
+                    stPowerPrCs = opp.Property__r.Power_2__c;
+                } else {
+                    wprObj.PowerProCus = 'none';
+                }
+                //Pinchange 10-Jan-2018 : Start
+                if(stCoolPrCs=='Customer' && stHeatPrCs!='Customer' && stPowerPrCs!='Customer'){
+                    if(wprObj.oppRTName=='Capacity')
+                        wprObj.pinColor = 'marker_blue_star';
+                    else 
+                        wprObj.pinColor = 'marker_blue';
+                    wprObj.Criteria = 'Cooling';
+                } else if(stCoolPrCs=='Customer' && stHeatPrCs!='Customer' && stPowerPrCs=='Customer'){
+                    if(wprObj.oppRTName=='Capacity')
+                        wprObj.pinColor='marker_blue_star';
+                    else 
+                        wprObj.pinColor='marker_blue';
+                    wprObj.Criteria='Cooling';
+                } else if(stCoolPrCs!='Customer' && stHeatPrCs=='Customer' && stPowerPrCs!='Customer'){
+                    if(wprObj.oppRTName=='Capacity')
+                        wprObj.pinColor='marker_red_star';
+                    else 
+                        wprObj.pinColor='marker_red';
+                    wprObj.Criteria='Heating';
+                } else if(stCoolPrCs!='Customer' && stHeatPrCs=='Customer' && stPowerPrCs=='Customer'){
+                    if(wprObj.oppRTName=='Capacity')
+                        wprObj.pinColor='marker_red_star';
+                    else 
+                        wprObj.pinColor='marker_red';
+                    wprObj.Criteria='Heating';
+                } else if(stCoolPrCs=='Customer' && stHeatPrCs=='Customer' && stPowerPrCs=='Customer'){
+                    if(wprObj.oppRTName=='Capacity')
+                        wprObj.pinColor='marker_violet_star';
+                    else 
+                        wprObj.pinColor = 'marker_violet';
+                    wprObj.Criteria='Cooling and Heating';
+                } else if(stCoolPrCs=='Customer' && stHeatPrCs=='Customer' && stPowerPrCs!='Customer'){
+                    if(wprObj.oppRTName=='Capacity')
+                        wprObj.pinColor = 'marker_violet_star';
+                    else 
+                        wprObj.pinColor = 'marker_violet';
+                    wprObj.Criteria = 'Cooling and Heating';
+                } else if(stCoolPrCs!='Customer' && stHeatPrCs!='Customer' && stPowerPrCs=='Customer'){
+                    wprObj.pinColor = 'marker_black';
+                    wprObj.Criteria = 'Power';
+                } else {
+                    wprObj.pinColor = 'marker_yellow';
+                    wprObj.Criteria = 'none';
+                }                
+                
+                if(opp.Contracts__r !=null && !opp.Contracts__r.isEmpty()){
+                    wprObj.AcContractNumber = opp.Contracts__r[0].ContractNumber;                
+                    wprObj.AcContractID = opp.Contracts__r[0].Id;
+                    List<Contract> objContract = opp.Contracts__r;
+                    wprObj.Contractlst = objContract;
+                } else {
+                    wprObj.AcContractNumber='none';
+                    wprObj.AcContractID ='none';
+                }
+                
+                System.debug('end pin2'+wprObj.Criteria);
+                wprObj.description = geoAddress;
+                if(opp.Property__r.ParentId==null){
+                    wprObj.ParentID=''; 
+                } else {
+                    wprObj.ParentID= opp.Property__r.ParentId;
+                }
+                if(opp.Property__r.Parent.Name==null){
+                    wprObj.ParentName =''; 
+                } else {
+                    wprObj.ParentName = opp.Property__r.Parent.Name;
+                }
+                
+                wprObj.OppurID = opp.id;                
+                if(opp.Property__r.Name==null){
+                    wprObj.AccName = ''; 
+                } else {
+                    wprObj.AccName = opp.Property__r.Name; 
+                }
+                if(opp.Property__c==null){
+                    wprObj.AccounID ='';
+                } else {
+                    wprObj.AccounID = opp.Property__c; 
+                }
+                
+                if(wprObj.oppRTName!='Capacity' && wprObj.Oppstage=='Lost'){					
+                    wprObj.pinColor = 'marker_dark1_green';			
+                }	
+                if(wprObj.Oppstage == 'Legal Drafting' || wprObj.Oppstage == 'Contracted' || wprObj.Oppstage == 'In Construction') {
+                    wprObj.pinColor='Marker_Yellow_Brighter';
+                }
+                CusWprLst.add(wprObj);
+            }
+        }
+        
+        System.debug('addrWprLst @>'+addrWprLst);
+        objTwoWrap.lstMapWpr = addrWprLst;
+        objTwoWrap.lstCusAddrWpr = CusWprLst;
+        AggregateResult[] groupedResults = [SELECT BillingCity FROM Account where RecordTypeId IN: RECORDTYPE_ID group by BillingCity];
+        List<String> strCity = new List<String>();
+        for(AggregateResult ar:groupedResults) {
+            strCity.add(String.valueOf(ar.get('BillingCity')));
+        }        
+        objTwoWrap.lstCity = strCity;
+        
+        //Get the drawn map(JSON) from DrawMap object
+        //DrawMapTbl__c objDrawMap=new DrawMapTbl__c();
+        Integer JScount = [Select count() FROM DrawMapTbl__c];
+        objTwoWrap.geoJson = '';
+        if(JScount>0){
+            for(DrawMapTbl__c objDrawMap:[Select Id,JsonString__c FROM DrawMapTbl__c Order By Order__c ASC]){
+                objTwoWrap.geoJson += objDrawMap.JsonString__c;
+            }            
+        }        
+        
+        //Opportunity stage values
+        Schema.DescribeFieldResult fieldResult = Opportunity.StageName.getDescribe();
+        List<Schema.PicklistEntry> Stages = fieldResult.getPicklistValues();
+        for(Schema.PicklistEntry StageNames:Stages){
+            StageWrapCls StageWrpObj=new StageWrapCls();
+            StageWrpObj.StageName=StageNames.getValue();
+            StagWprLst.add(StageWrpObj);            
+        }
+        objTwoWrap.lstStages = StagWprLst;
+        System.debug('objTwoWrap.lstStages @>'+objTwoWrap.lstStages);
+        //Opportunity Record Type filter
+        objTwoWrap.oppRecordTypes = getOpportunityRTs();
+        objTwoWrap.oppDealTypes = getMADealTypes();
+        
+        return objTwoWrap;
+    }    
+    
+    /*
+*	Description : get/set DrawMapTbl record value
+*/
+    @AuraEnabled
+    public static void createWprlstInput(String strJson) {
+        try{
+            System.debug('strJson size @>'+strJson.length());
+            if(!String.isEmpty(strJson)) {
+                //Save the drawn map(JSON) to DrawMap object				
+                System.debug('strJson size @>'+strJson);
+                List<DrawMapTbl__c> drawingList = new List<DrawMapTbl__c>();				
+                DrawMapTbl__c objInserJSon;
+                integer order=0;
+                while(!String.isEmpty(strJson)){
+                    objInserJSon = new DrawMapTbl__c();
+                    objInserJSon.Order__c = ++order;
+                    if(strJson.length()<=131070){                     
+                        objInserJSon.JsonString__c = strJson;
+                        strJson = '';
+                    } else {
+                        objInserJSon.JsonString__c = strJson.substring(0, 131071);
+                        strJson = strJson.substring(131071);
+                    }					
+                    drawingList.add(objInserJSon);
+                    System.debug('strJson size @>'+strJson);
+                }
+                
+                List<DrawMapTbl__c> oldDrawing = [Select Id, JsonString__c FROM DrawMapTbl__c];						
+                system.debug('oldDrawing===>'+oldDrawing);
+                System.debug('drawingList @>'+drawingList);
+                if(!drawingList.isEmpty())					
+                    insert drawingList;	
+                
+                System.debug('drawingList @>'+oldDrawing);
+                if(!oldDrawing.isEmpty())
+                    delete oldDrawing;
+            }        
+        } catch(Exception e){
+            System.debug('Exception @>'+e.getMessage()+' at '+e.getLineNumber());
+        }
+    }
+}
