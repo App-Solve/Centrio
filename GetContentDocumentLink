@@ -1,0 +1,256 @@
+// from here
+// https://www.forcetalks.com/blog/insert-contentversion-by-rest-api-the-salesforce-developer-guide/
+// except that PUSHES the file. I want to pull it.
+
+// Send an Object Id to the using the byID method to the old org and this will
+// bring back the links. The values are then mapped to new IDs
+// ANONYMOUS APEX TEST
+// GetContentDocumentLink.createInNewOrg('8007h000000ESgVAAW', '8001I0000009lftQAA');
+// 
+// 
+
+
+public class GetContentDocumentLink {
+
+public string oldContentDocumentId {get; set;}
+public string oldLinkedEntityId {get; set;}
+
+    // Enwave Canada Production
+    private final String clientId = '3MVG9Nk1FpUrSQHdE.WY2MDhKsc93OGpbPwn8K2hj8IdgvAzz_GuRYyeBp5WNdjgSfdubcgwkPQ==';
+    private final String clientSecret = 'A720D074F72DD7CF15B0CFB1C8514C80B018C7EF1CF27B833CFC600EAD389AEF';
+    private final String username = 'enwave@appsolve.team';
+    private final String password = 'AppSolve1' + 'qVuvrjOVqhpeBdCimlC8OqSB';
+
+        
+    // Enwave USA Production (for testing)
+    // private final String clientId = '3MVG9g9rbsTkKnAW7X4mQ49oI68mQXYHTbWqbTzDwbNQMvqC7k5SH.f48wbhfM8kIkeKk3qMylSdVq7b7ErHA';
+    // private final String clientSecret = 'A720D074F72DD7CF15B0CFB1C8514C80B018C7EF1CF27B833CFC600EAD389AEF';
+    // private final String username = 'enwave-destination@appsolve.com';
+    // private final String password = 'AppSolve1' + '9dW6Nc1l481FziPoc1CQvKIlH';
+    
+    public class deserializeResponse {
+        public String id;
+        public String access_token;
+        public String instance_url;
+    }
+    
+    public String getAccessToken (){
+        String reqbody = 'grant_type=password&client_id='
+            +clientId+'&client_secret='
+            +clientSecret+'&username='
+            +username+'&password='+password;        
+        Http h = new Http();
+        HttpRequest req = new HttpRequest();
+        // req.setEndpoint('https://enwaveusaholdingsllc.my.salesforce.com/services/oauth2/token');        
+        req.setEndpoint('https://enwave.my.salesforce.com/services/oauth2/token');        
+        req.setMethod('POST');
+        req.setBody(reqbody);
+        //req.setHeader('Authorization', 'OAuth '+UserInfo.getSessionId());
+        HttpResponse res = h.send(req);
+        System.Debug(res.getBody());
+        System.Debug(res.getStatusCode());
+        deserializeResponse response = (deserializeResponse)JSON.deserialize(res.getbody(),deserializeResponse.class);
+        system.debug('@@@@access_token@@'+response );
+        return response.access_token;
+    }
+    
+    
+    public static HttpResponse byId(String objectId) {
+
+        //get Access Token
+        GetContentDocumentLink accessTk = new GetContentDocumentLink();
+		
+        String accessToken;
+        accessToken = accessTk.getAccessToken();
+		System.Debug(accessToken);
+
+        //Make sure your Salesforce instance URL is added in remote site settings
+        String getDocumentURL = 'https://enwave.my.salesforce.com/services/apexrest/GetSingleDocumentLink/' + objectId;  
+        // String getDocumentURL = 'https://enwaveusaholdingsllc.my.salesforce.com/services/apexrest/GetSingleContentVersion/' + objectId;  
+
+        HttpRequest req = new HttpRequest();  
+            req.setMethod('GET');   
+            req.setHeader('Authorization','Bearer '  +accessToken);
+            req.setHeader('Content-Type','application/json');
+            req.setEndpoint(getDocumentURL);  
+
+        Http http = new Http();   
+        HttpResponse file = http.send(req);
+        System.Debug(file.getStatusCode());
+
+        // if(file.getStatusCode() == 200) {
+        // 	createInNewOrg(objectId);
+        // }
+        
+        return file;
+    }
+    
+    
+    // test
+    // GetContentDocumentLink.createInNewOrg('8007h000000ESgVAAW', '8001I0000009kyNQAQ');
+    @future(callout=true)
+    public static void createInNewOrg(String newId, String oldId) {
+
+		HttpResponse link = byId(oldId);
+        System.Debug('Response Body');
+        System.Debug(link.getBody());
+		// The web service sends back three variables
+        // oldCDLId - we don't really care. This is the old link.
+        // oldContentDocumentId - we need map this to the new ID from the Content Version
+        // oldLinkedEntityId - could be any object and we need to map it to the new ID for whatever that is
+        if(link.getStatusCode() == 200) {
+		Integer filesOnSource = 0;
+        Integer filesOnDestination = 0;
+            
+            JSONParser parser = JSON.createParser(link.getBody());    
+        List<GetContentDocumentLink> allFileLinks = new List<GetContentDocumentLink>();
+            while(parser.nextToken() != JSONToken.END_OBJECT){ // loop through each object
+                while(parser.nextToken() != JSONToken.END_ARRAY) { // we started with an array of objects
+                        GetContentDocumentLink cdl = new GetContentDocumentLink();            
+                            while(parser.nextToken() != JSONToken.END_OBJECT){ // loop through each object
+                                
+                            if(parser.getCurrentToken() == JSONToken.FIELD_NAME) { //token should be field name
+                                String attr = parser.getText(); //get the text of the field name
+                                parser.nextToken(); // move the pointer
+                                //start mapping the fields
+                                if(attr == 'oldLinkedEntityId') { 
+                                    cdl.oldLinkedEntityId = parser.getText();
+                                } else if(attr == 'oldContentDocumentId') {
+                                    cdl.oldContentDocumentId = parser.getText();
+                                    filesOnSource += 1; // Increment our file count
+                                }
+                            }
+                        }
+                    // add the record to the list
+                    allFileLinks.add(cdl);
+                }
+            }
+        
+        List<ContentDocumentLink> allNewContentDocuments = new List<ContentDocumentLink>();
+        Set<String> allContentDocumentIds = new Set<String>();
+        for(GetContentDocumentLink c : allFileLinks) {
+            if(c.oldContentDocumentId != null) { allContentDocumentIds.add(c.oldContentDocumentId); }
+            System.Debug(c.oldLinkedEntityId);
+            System.Debug(c.oldContentDocumentId);
+        }                    
+
+        // We're storing content document IDs in Content versions, so we're going to pull
+        // the ones that match and then map them
+		List<ContentVersion> allContentVersions = new List<ContentVersion>();
+		// This could fail if we don't have a match, so...
+        try {
+        allContentVersions = [SELECT Id, 
+                                ContentDocumentId, 
+                                Old_ContentDocumentId__c 
+                                FROM ContentVersion 
+                                WHERE Old_ContentDocumentId__c 
+                                IN :allContentDocumentIds];
+        } catch(DmlException e) {
+            System.Debug(e.getMessage());
+        }
+
+			// If we didn't find any matching files, don't do anything else        
+            if(allContentVersions.isEmpty() == false) {
+            // A map that gets us the new id from the old one. Woohoo.
+            Map<String, String> oldContentIdToNew = new Map<String, String>();
+            for(ContentVersion cv : allContentVersions) {
+                oldContentIdToNew.put(cv.Old_ContentDocumentId__c, cv.ContentDocumentId);
+            }    
+                
+            // This could fail if the documents are already linked    
+            try {
+                List<Migration_Source_File_Missing__c> missingFiles = new List<Migration_Source_File_Missing__c>();
+                for(GetContentDocumentLink c : allFileLinks) {
+                    if(oldContentIdToNew.containsKey(c.oldContentDocumentId) == true) {
+                        ContentDocumentLink cd = new ContentDocumentLink();
+                            cd.LinkedEntityId = newId;
+                            cd.ContentDocumentId = oldContentIdToNew.get(c.oldContentDocumentId);
+                            cd.Visibility = 'AllUsers';
+                            cd.ShareType = 'I';
+                        allNewContentDocuments.add(cd);
+                    } else {
+                        Migration_Source_File_Missing__c mf = new Migration_Source_File_Missing__c();
+                        	mf.Source_Content_Document_Id__c = c.oldContentDocumentId;
+                        	missingFiles.add(mf);
+                	}
+                } 
+
+                insert missingFiles;
+                insert allNewContentDocuments;
+                
+                Migrated_Id__c m = new Migrated_Id__c();
+                	m.Canadian_Record_Id__c = oldId;
+                	m.US_Record_Id__c = newId;
+                insert m;
+            } catch(DmlException e) {
+
+                try{
+                for(GetContentDocumentLink c : allFileLinks) {
+                    if(oldContentIdToNew.containsKey(c.oldContentDocumentId) == true) {
+                        ContentDocumentLink cd = new ContentDocumentLink();
+                            cd.LinkedEntityId = newId;
+                            cd.ContentDocumentId = oldContentIdToNew.get(c.oldContentDocumentId);
+                            cd.Visibility = 'AllUsers';
+                            cd.ShareType = 'I';
+                        insert cd;
+
+                        Migrated_Id__c m = new Migrated_Id__c();
+                			m.Canadian_Record_Id__c = oldId;
+		                	m.US_Record_Id__c = newId;
+                        	m.Status__c = 'Success';
+        		        insert m;
+
+                    } else {
+                        Migration_Source_File_Missing__c mf = new Migration_Source_File_Missing__c();
+                        	mf.Source_Content_Document_Id__c = c.oldContentDocumentId;
+                        	insert mf;
+                    }
+                    }            
+            
+                } catch(DmlException e2) {
+                    System.Debug(e2.getMessage());
+						Migrated_Id__c m = new Migrated_Id__c();
+                			m.Canadian_Record_Id__c = oldId;
+		                	m.US_Record_Id__c = newId;
+                        	m.Status__c = 'Failure';
+        		        insert m;
+
+                }
+
+						Migrated_Id__c m = new Migrated_Id__c();
+                			m.Canadian_Record_Id__c = oldId;
+		                	m.US_Record_Id__c = newId;
+                        	m.Status__c = 'Failure';
+                			m.Message__c = e.GetMessage();
+        		        insert m;
+            }
+        }
+            
+            if(newId.left(3) == '001') {
+                // update the account with files on on source
+                Account a = new Account();
+                	a.Id = newId;
+                	a.Files_on_Source_Org__c = filesOnSource;
+					List<ContentDocumentLink> theseFiles = new List<ContentDocumentLink>([SELECT Id
+                                                                                         FROM ContentDocumentLink
+                                                                                         WHERE LinkedEntityId = :newId]);
+                	
+                	a.Files_on_Destination_Org__c = theseFiles.size();
+                update a;
+            } else if (newId.left(3) == '800') {
+                // update contract
+                Contract a = new Contract();
+                	a.Id = newId;
+                	a.Files_on_Source_Org__c = filesOnSource;
+					List<ContentDocumentLink> theseFiles = new List<ContentDocumentLink>([SELECT Id
+                                                                                         FROM ContentDocumentLink
+                                                                                         WHERE LinkedEntityId = :newId]);
+                	
+                	a.Files_on_Destination_Org__c = theseFiles.size();
+                update a;
+                
+            }
+        } else { System.Debug('Authentication Failed'); }
+    }    
+   
+}
