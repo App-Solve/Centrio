@@ -1,0 +1,28 @@
+/*
+Description : test class for trigger on insert and update
+Author: SINDHUR
+Date Of Creation: 1-2-2018
+Modification Date:1-2-2018
+*/
+@istest
+public class GenerateLocationTriggerTest {
+    public static TestMethod void insertAccount(){
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Heating_2__c='Prospect';
+        a.Cooling_2__c='';
+        a.Power_2__c='';
+		Test.startTest();
+        Test.setMock(HttpCalloutMock.class, new TestWebserviceMock());
+		insert a;
+		Test.stopTest();
+    }
+}
