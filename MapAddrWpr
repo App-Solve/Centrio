@@ -1,0 +1,99 @@
+/*
+Description : Wrapper class store address feilds
+Author: Sindhur
+Date Of Creation: 11-12-2017
+*/
+public class MapAddrWpr {
+    //account name
+    @AuraEnabled
+    public String AccName;
+    //account latitude code
+    @AuraEnabled
+    public double latitude;
+    //account longitude code
+    @AuraEnabled
+    public double longitude;
+    //pin color to display on map
+    @AuraEnabled
+    public String pinColor;
+    //property address
+    @AuraEnabled
+    public String description;
+    //account BillingCity
+    @AuraEnabled
+    public String BillingCity;
+    //Account BillingCity
+    @AuraEnabled
+    public String OppCity;  
+    @AuraEnabled
+    public String Criteria;  
+    @AuraEnabled
+    public String AccounID;  
+    @AuraEnabled
+    public String ParentID; 
+    @AuraEnabled
+    public String ParentName;
+    @AuraEnabled
+    public String AcContractNumber;
+    @AuraEnabled
+    public String AcContractID;
+    @AuraEnabled
+    public String HeatingProCus;
+    @AuraEnabled
+    public String CoolingProCus; 
+    @AuraEnabled
+    public String PowerProCus;
+    //list of contracts
+    @AuraEnabled
+    public List<Contract> Contractlst;
+	
+	//opportunity Id
+    @AuraEnabled
+    public String OppurID;  
+    //opportunity name
+    @AuraEnabled
+    public String OppName;
+    //opportunity stage
+    @AuraEnabled
+    public String Oppstage;
+    //opportunity record type name
+    @AuraEnabled
+    public String oppRTName;
+    //M&A Opportunity deal type
+	@AuraEnabled
+    public String oppDealType;
+	//property type
+	@AuraEnabled    
+	public String oppBuildingType;
+	//Property size in sqft
+    @AuraEnabled
+    public Decimal oppSize;
+	//opportunity next step
+    @AuraEnabled
+    public String oppNextStep;
+    //opportunity building photo
+    @AuraEnabled
+    public String oppBuildingPhoto;
+	
+	//opportunity services
+    @AuraEnabled
+    public String oppServices;
+	//opportunity Generation
+    @AuraEnabled
+    public String oppGeneration;
+	//opportunity System Location
+    @AuraEnabled
+    public String oppSystemLocation;
+	//opportunity Cooling Load - Nameplate (Tons)
+    @AuraEnabled
+    public Decimal oppCoolingLoadNameplate;
+	//opportunity Cooling Load – Actual/Expected (Tons)
+    @AuraEnabled
+    public Decimal oppCoolingLoadActual;
+	//opportunity Heating Load - Nameplate (MBH):
+    @AuraEnabled
+    public Decimal oppHeatingLoadNameplate;
+	//opportunity Heating Load – Actual/Expected (MBH):
+    @AuraEnabled
+    public Decimal oppHeatingLoadActual;	
+}
