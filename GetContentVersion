@@ -1,0 +1,169 @@
+// from here
+// https://www.forcetalks.com/blog/insert-contentversion-by-rest-api-the-salesforce-developer-guide/
+// except that PUSHES the file. I want to pull it.
+
+public class GetContentVersion {
+
+    // Enwave Canada Production
+    private final String clientId = '';
+    private final String clientSecret = '';
+    private final String username = 'enwave@appsolve.team';
+    private final String password = 'AppSolve1' + 'yJ67JJSdTb5WbKJE9iMKTq6h';
+
+        
+    // Enwave USA Production (for testing)
+    // private final String clientId = '';
+    // private final String clientSecret = 'A720D074F72DD7CF15B0CFB1C8514C80B018C7EF1CF27B833CFC600EAD389AEF';
+    // private final String username = 'enwave-destination@appsolve.com';
+    // private final String password = 'AppSolve1' + '9dW6Nc1l481FziPoc1CQvKIlH';
+    
+    public class deserializeResponse {
+        public String id;
+        public String access_token;
+        public String instance_url;
+    }
+    
+    public String getAccessToken (){
+        String reqbody = 'grant_type=password&client_id='
+            +clientId+'&client_secret='
+            +clientSecret+'&username='
+            +username+'&password='+password;        
+        Http h = new Http();
+        HttpRequest req = new HttpRequest();
+        // req.setEndpoint('https://enwaveusaholdingsllc.my.salesforce.com/services/oauth2/token');        
+        req.setEndpoint('https://enwave.my.salesforce.com/services/oauth2/token');        
+        req.setMethod('POST');
+        req.setBody(reqbody);
+        //req.setHeader('Authorization', 'OAuth '+UserInfo.getSessionId());
+        HttpResponse res = h.send(req);
+        System.Debug(res.getBody());
+        System.Debug(res.getStatusCode());
+        deserializeResponse response = (deserializeResponse)JSON.deserialize(res.getbody(),deserializeResponse.class);
+        system.debug('@@@@access_token@@'+response );
+        return response.access_token;
+    }
+    
+    
+    public static HttpResponse byId(String objectId) {
+
+        //get Access Token
+        GetContentVersion accessTk = new GetContentVersion();
+        String accessToken;
+        accessToken = accessTk.getAccessToken();
+		System.Debug(accessToken);
+
+        //Make sure your Salesforce instance URL is added in remote site settings
+        String getDocumentURL = 'https://enwave.my.salesforce.com/services/apexrest/GetSingleContentVersion/' + objectId;  
+        // String getDocumentURL = 'https://enwaveusaholdingsllc.my.salesforce.com/services/apexrest/GetSingleContentVersion/' + objectId;  
+
+        HttpRequest req = new HttpRequest();  
+            req.setMethod('GET');   
+            req.setHeader('Authorization','Bearer '  +accessToken);
+            req.setHeader('Content-Type','application/json');
+            req.setEndpoint(getDocumentURL);  
+
+        Http http = new Http();   
+        HttpResponse file = http.send(req);
+        System.Debug(file.getStatusCode());
+
+        // if(file.getStatusCode() == 200) {
+        // 	createInNewOrg(objectId);
+        // }
+        
+        return file;
+    }
+    
+    @future(callout=true)
+    public static void createInNewOrg(String oldId) {
+        try {
+        HttpResponse file = byId(oldId);
+        
+        String docTitle = 'default';
+        String docFileExtension;
+        String docVersionData;
+        String docOldContentDocumentId;
+        String docOldFirstPublishLocationId;
+
+                JSONParser sourceParser = JSON.createParser(file.getBody());
+        		while (sourceParser.nextToken() != null) {
+                    // Get the Title
+                    System.Debug(sourceParser.getCurrentToken());
+                    System.Debug('Parser Text' + sourceParser.getText());
+                    if ((sourceParser.getCurrentToken() == JSONToken.FIELD_NAME) && 
+                                    (sourceParser.getText() == 'fileData')) {
+                                    sourceParser.nextToken();
+									docVersionData = sourceParser.getText();
+                    }    
+                    if ((sourceParser.getCurrentToken() == JSONToken.FIELD_NAME) && 
+                                    (sourceParser.getText() == 'fileExtension')) {
+                                    sourceParser.nextToken();
+									docFileExtension = sourceParser.getText();
+                    }    
+                    if ((sourceParser.getCurrentToken() == JSONToken.FIELD_NAME) && 
+                                    (sourceParser.getText() == 'fileTitle')) {
+                                    sourceParser.nextToken();
+									docTitle = sourceParser.getText();
+                    }    
+                    if ((sourceParser.getCurrentToken() == JSONToken.FIELD_NAME) && 
+                                    (sourceParser.getText() == 'oldContentDocumentId')) {
+                                    sourceParser.nextToken();
+									docOldContentDocumentId = sourceParser.getText();
+                    }    
+                    if ((sourceParser.getCurrentToken() == JSONToken.FIELD_NAME) && 
+                                    (sourceParser.getText() == 'oldFirstPublishLocationId')) {
+                                    sourceParser.nextToken();
+									docOldFirstPublishLocationId = sourceParser.getText();
+                    }    
+                }
+			System.Debug(docVersionData);
+
+        	// some things don't have an extension
+        	String fileName;
+        	if(docFileExtension != null) {
+                fileName = docTitle + '.' + docFileExtension;
+            } else {
+                fileName = docTitle;
+            }
+
+          	ContentVersion cv = new ContentVersion();
+          		cv.VersionData = EncodingUtil.base64Decode(docVersionData);
+          		cv.Title = docTitle;
+        		cv.Description = 'From Old Org';
+        		cv.PathOnClient = fileName;
+        		cv.Old_ContentVersionId__c = oldId;
+        		cv.Old_ContentDocumentId__c = docOldContentDocumentId;
+                if(docOldFirstPublishLocationId != null) { 
+                    cv.FirstPublishLocationId = mapOldId(docOldFirstPublishLocationId);
+                }
+          	insert cv;
+            
+            // Migration_File__c mf = [SELECT Id FROM Migration_File__c WHERE Canadian_ID__c = :oldId];
+            // mf.Migrated__c = true;
+            // update mf;
+        } catch(DMLException e) {
+            // Migration_File__c mf = [SELECT Id FROM Migration_File__c WHERE Canadian_ID__c = :oldId];
+            // mf.Error__c = String.valueOf(e.getMessage());
+            // update mf;
+            System.Debug(e.getMessage()); 
+            }
+    }    
+    
+    public static String mapOldId(String oldId) {
+		// feeds an old ID and maps a new ID
+        String newId;
+        if(oldId.left(3) == '001') {
+        	Account a = [SELECT Id, Old_AccountId__c FROM Account WHERE Old_AccountId__c = :oldId];
+            newId = a.Id;
+        } else if (oldId.left(3) == '003') {
+        	Contact a = [SELECT Id, Old_ContactId__c FROM Contact WHERE Old_ContactId__c = :oldId];
+            newId = a.Id;
+        } else if (oldId.left(3) == '006') {
+        	Opportunity a = [SELECT Id, Old_OpportunityId__c FROM Opportunity WHERE Old_OpportunityId__c = :oldId];
+            newId = a.Id;
+	    } else if(oldId.left(3) == '800') {
+            Contract a = [SELECT Id, Old_ContractId__c FROM Contract WHERE Old_ContractId__c = :oldId];
+        } 
+        return newId;
+    }
+    
+}
