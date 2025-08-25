@@ -1,0 +1,28 @@
+@isTest
+private class Test_GetContentDocumentLink {
+    @isTest static void testCreate() {
+        
+        String moby = 'As for me, I am tormented with an everlasting itch for things remote. I love to sail forbidden seas, and land on barbarous coasts.';
+        
+        Account a = new Account();
+        	a.Name = 'Pequod';
+        	a.Description = moby;
+        	a.Old_AccountId__c = '001234567891234567';
+        insert a;
+
+        ContentVersion cv = new ContentVersion();
+            cv.VersionData = Blob.valueOf(moby);
+            cv.Title = 'The White Whale';
+            cv.Description = 'From Old Org New Org';
+            cv.PathOnClient = 'moby.txt';
+        	cv.FirstPublishLocationId = a.Id;
+            // cv.Old_ContentVersionId__c = oldId;
+            cv.Old_ContentDocumentId__c = '012345678912345678';
+        insert cv;
+
+        
+        Test.setMock(HttpCalloutMock.class, new Mock_GetSingleContentDocument());
+        GetContentDocumentLink.createInNewOrg(a.Id, a.Old_AccountId__c);
+
+    }
+}
