@@ -1,0 +1,27 @@
+@IsTest
+private class Test_SendSingleContentVersion {
+
+    @isTest static void testGetContentVersion() {
+
+		String moby = 'From beneath his slouched hat Ahab dropped a tear into the sea; nor did all the Pacific contain such wealth as that one wee drop.';
+
+        ContentVersion cv = new ContentVersion();
+            cv.VersionData = Blob.valueOf(moby);
+            cv.Title = 'The White Whale';
+            cv.Description = 'From Old Org New Org';
+            cv.PathOnClient = 'moby.txt';
+            // cv.Old_ContentVersionId__c = oldId;
+            // cv.Old_ContentDocumentId__c = docOldContentDocumentId;
+        insert cv;
+
+        Id recordId = cv.Id;
+        // Set up a test request
+        RestRequest request = new RestRequest();
+        request.requestUri = URL.getSalesforceBaseUrl().toExternalForm() + '/services/apexrest/GetSingleContentVersion/' + recordId;
+        request.httpMethod = 'GET';
+        RestContext.request = request;
+        // Call the method to test
+        SendSingleContentVersion.doGet();
+    }
+
+}
