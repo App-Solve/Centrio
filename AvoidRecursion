@@ -1,0 +1,19 @@
+/*
+Description : helper class to triger to check
+Author: SINDHUR
+Date Of Creation: 1-2-2018
+Modification Date:1-2-2018
+*/
+public Class AvoidRecursion{
+    @testvisible
+    private static boolean firstRun = true;
+    public static boolean isFirstRun(){
+        system.debug('isFirstRun'+firstRun);
+    if(firstRun){
+      firstRun = false;
+      return true;
+    }else{
+        return firstRun;
+    }
+    }
+}
