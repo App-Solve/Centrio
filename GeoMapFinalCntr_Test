@@ -1,0 +1,911 @@
+@IsTest
+public class GeoMapFinalCntr_Test {
+    
+    public static string RECORDTYPE_ID= Schema.SObjectType.Account.getRecordTypeInfosByName().get('Property').getRecordTypeId();
+    
+    public static TestMethod void WatchList(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Heating_2__c='Prospect';
+        a.Cooling_2__c='';
+        a.RecordTypeId=RECORDTYPE_ID;
+        a.Power_2__c='';
+        insert a;
+        
+        Opportunity o=new Opportunity();
+        o.Name=a.Name;
+        o.AccountId=a.Id;
+        o.StageName='Watch List';
+        o.CloseDate=system.today();
+        o.Property__c=a.Id;
+        insert o;
+        
+        contract c=new Contract();
+        c.AccountId=a.Id;
+        insert c;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);
+    }
+    public static TestMethod void InDiscussions(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Heating_2__c='';
+        a.Cooling_2__c='Prospect';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o=new Opportunity();
+        o.Name=a.Name;
+        o.AccountId=a.Id;
+        o.StageName='In Discussions';
+        o.CloseDate=system.today();
+        o.Property__c=a.Id;
+        insert o;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);
+    }
+    public static TestMethod void InitialContact(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Heating_2__c='Prospect';
+        a.Cooling_2__c='Prospect';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o=new Opportunity();
+        o.Name=a.Name;
+        o.AccountId=a.Id;
+        o.StageName='Initial Contact';
+        o.CloseDate=system.today();
+        o.Property__c=a.Id;
+        insert o;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);
+    }
+    public static TestMethod void ProposalDevelopment(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o2=new Opportunity();
+        o2.Name=a.Name;
+        o2.AccountId=a.Id;
+        o2.StageName='Proposal Development';
+        o2.CloseDate=system.today();
+        o2.Property__c=a.Id;
+        insert o2;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);       
+    }
+    public static TestMethod void EngineeringReview(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o1=new Opportunity();
+        o1.Name=a.Name;
+        o1.AccountId=a.Id;
+        o1.StageName='Engineering Review';
+        o1.CloseDate=system.today();
+        o1.Property__c=a.Id;
+        insert o1;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);      
+    }
+    public static TestMethod void LegalDocumentNegotiation(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Legal Drafting';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);
+    }
+    public static TestMethod void ContractedClosedWon(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Contracted';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);
+    }
+    public static TestMethod void InConstructionClosedWon(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='In Construction';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);
+    }
+    public static TestMethod void RevenueClosedWon(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Revenue';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);   
+    }
+    public static TestMethod void Hold(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Hold';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);   
+    }
+    public static TestMethod void LostDead(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Heating_2__c='Customer';
+        a.Cooling_2__c='Customer';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Lost - Dead';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);   
+    }
+    public static TestMethod void CommissionedCusProNone(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Cooling_2__c='';
+        a.Heating_2__c='';
+        a.Power_2__c='Customer';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Commissioned';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);   
+    }
+    public static TestMethod void CommissionedCusPros(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Cooling_2__c='Customer';
+        a.Heating_2__c='Prospect';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Commissioned';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);   
+    }
+    public static TestMethod void CommissionedProsCus(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Cooling_2__c='Prospect';
+        a.Heating_2__c='Customer';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Commissioned';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);   
+    }
+    public static TestMethod void CommissionedProsHeatCol(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Cooling_2__c='Prospect';
+        a.Heating_2__c='Prospect';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Commissioned';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);   
+    }
+    public static TestMethod void CommissionedProsHeat(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Cooling_2__c='';
+        a.Heating_2__c='Prospect';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Commissioned';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);   
+    }    
+    public static TestMethod void CommissionedProsCol(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Cooling_2__c='Prospect';
+        a.Heating_2__c='';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Commissioned';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);   
+    }
+    public static TestMethod void CommissionedheatCol(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Cooling_2__c='Customer';
+        a.Heating_2__c='Customer';
+        a.Power_2__c='Customer';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Commissioned';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);   
+    }
+    public static TestMethod void Commissioned_heat(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Cooling_2__c='';
+        a.Heating_2__c='Customer';
+        a.Power_2__c='Customer';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Commissioned';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);   
+    }
+    public static TestMethod void Commissioned(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Cooling_2__c='Customer';
+        a.Heating_2__c='';
+        a.Power_2__c='Customer';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Commissioned';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);   
+    }
+    public static TestMethod void ProposalSubmitted(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Heating_2__c='Customer';
+        a.Cooling_2__c='';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Proposal Submitted';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);   
+    }
+    public static TestMethod void CommissCusProPowerNone(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Cooling_2__c='Customer';
+        a.Heating_2__c='';
+        a.Power_2__c='';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Commissioned';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);   
+    }
+    public static TestMethod void CommissHeatProPowerNone(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Cooling_2__c='';
+        a.Heating_2__c='Customer';
+        a.Power_2__c='';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Commissioned';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);   
+    }
+    public static TestMethod void CommissPowerNone(){        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Cooling_2__c='Customer';
+        a.Heating_2__c='Customer';
+        a.Power_2__c='';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Commissioned';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);   
+    }
+    public static TestMethod void CommissAllNone(){        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.BillingCity='New york';
+        a.BillingState='NY';
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Cooling_2__c='';
+        a.Heating_2__c='';
+        a.Power_2__c='';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Opportunity o3=new Opportunity();
+        o3.Name=a.Name;
+        o3.AccountId=a.Id;
+        o3.StageName='Commissioned';
+        o3.CloseDate=system.today();
+        o3.Property__c=a.Id;
+        insert o3;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);   
+    }
+    public static TestMethod void Nostage(){
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        //a.chkCooling__c=false;
+        //a.chkHeating__c=true;
+        a.Cooling_2__c='Customer';
+        a.Heating_2__c='';
+        a.RecordTypeId=RECORDTYPE_ID;
+        insert a;
+        
+        Account a1=new Account();
+        a1.Name='Test geolocation';
+        a1.Geo_Location__Latitude__s=40.73765;
+        a1.Geo_Location__Longitude__s=-73.98862;
+        a1.Type='Prospect';
+        //a1.chkCooling__c=true;
+        //a1.chkHeating__c=false;
+        insert a1;
+        
+        Account a2=new Account();
+        a2.Name='Test geolocation';
+        a2.Geo_Location__Latitude__s=40.73765;
+        a2.Geo_Location__Longitude__s=-73.98862;
+        a2.Type='Prospect';
+        //a2.chkCooling__c=true;
+        //a2.chkHeating__c=true;
+        insert a2;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        // d.Name=a.Name;
+        d.JsonString__c='{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"title":"my title","color":"#0000ff","weight":4},"geometry":{"type":"Polygon","coordinates":[[[175.26786983013156,-37.77556135886013],[175.26795566082006,-37.77542567477375],[175.26749968528748,-37.775256069315596],[175.26739776134494,-37.77543839516743],[175.26759624481204,-37.77551047735692],[175.26765525341037,-37.77543415503644],[175.26778399944308,-37.77548503659218],[175.26775717735293,-37.77554439836295],[175.26786983013156,-37.77556135886013]]]}},{"type":"Feature","properties":{"title":"my title","color":"#0000ff","weight":4},"geometry":{"type":"LineString","coordinates":[[175.2682077884674,-37.77472604975105],[175.26799321174624,-37.77536207277254],[175.26891589164734,-37.775684322348305]]}},{"type":"Feature","properties":{"title":"my title"},"geometry":{"type":"Point","coordinates":[175.26855111122134,-37.775022861175316]}},{"type":"Feature","properties":{"title":"my title"},"geometry":{"type":"Point","coordinates":[175.26717782020572,-37.77434443331178]}},{"type":"Feature","properties":{"title":"my title"},"geometry":{"type":"Point","coordinates":[175.26997804641724,-37.77388649098459]}},{"type":"Feature","properties":{"title":"my title","color":"#3388ff","weight":4},"geometry":{"type":"LineString","coordinates":[[175.26823997497561,-37.774734530093994],[175.2689051628113,-37.77571824327457]]}}]}';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);    
+    }
+    public static TestMethod void AcParent(){
+        
+        Account aParent=new Account();
+        aParent.Name='Parent1';
+        insert aParent;
+        
+        Account a=new Account();
+        a.Name='Test geolocation';
+        a.ParentId=aParent.Id;        
+        a.BillingCity='New york';
+        a.BillingState='NY';        
+        a.BillingCountry='USA';
+        a.BillingPostalCode='10003';
+        a.BillingStreet='228 Park Ave S';
+        a.Geo_Location__Latitude__s=40.73765;
+        a.Geo_Location__Longitude__s=-73.98862;
+        a.Type='Prospect';
+        a.Heating_2__c='Prospect';
+        a.Cooling_2__c='';
+        a.RecordTypeId=RECORDTYPE_ID;
+        a.Power_2__c='';
+        insert a;
+        
+        Opportunity o=new Opportunity();
+        o.Name=a.Name;
+        o.AccountId=a.Id;
+        o.StageName='Watch List';
+        o.CloseDate=system.today();
+        o.Property__c=a.Id;
+        insert o;
+        
+        contract c=new Contract();
+        c.AccountId=a.Id;
+        insert c;
+        
+        DrawMapTbl__c d=new DrawMapTbl__c();
+        d.Name=a.Name;
+        d.JsonString__c='';
+        insert d;
+        
+        GeoFinalCntrl.createWprlst();
+        GeoFinalCntrl.createWprlstInput(d.JsonString__c);
+    }
+}
