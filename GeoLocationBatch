@@ -1,0 +1,46 @@
+/*
+Description : Batch class to update location
+Author: SINDHUR
+Date Of Creation: 1-2-2018
+Modification Date:1-2-2018
+*/
+public class GeoLocationBatch implements Database.Batchable <Sobject>, Database.AllowsCallouts {
+    public Set<Id> AccountIdList;
+    public GeoLocationBatch(set<Id> AccountList){
+        this.AccountIdList = AccountList;
+    }
+    
+    public Database.QueryLocator start(Database.BatchableContext BC){
+        DateTime dt = system.now().addHours(-1);
+        System.debug('AccountIdList - '+ AccountIdList);
+        String Query = 'SELECT Id,BillingStreet, BillingCity, BillingState, BillingPostalCode,BillingCountry,Geo_Location__Latitude__s,Geo_Location__Longitude__s  FROM Account where BillingPostalCode !=null and id =: AccountIdList';
+        return Database.getQueryLocator(Query);
+    }
+    
+    public void execute(Database.BatchableContext BC, List<Account> scope){
+        //loop though Accounts object
+        System.debug('scope - '+ scope.size());
+        for(Account accountObj : scope){
+            List<Double> latlongList = new List<Double>();
+            system.debug('accountObj ========'+ latlongList);
+            latlongList = GenerateLocationTriggerHandler.geocoding(accountObj);
+            if(latlongList!=null && latlongList.size()>0){
+                accountObj.Geo_Location__Latitude__s = latlongList[0];
+                accountObj.Geo_Location__Longitude__s = latlongList[1];
+            }
+            latlongList= null;
+        }
+        try{
+        //to avoid recursion    
+	        AvoidRecursion.isFirstRun();
+            update scope;
+        }catch(exception e){
+            system.debug('batchUpdateAccountGeoLocation exception:' + e.getMessage());
+        }    
+    }
+    
+    public void finish(Database.BatchableContext BC){
+        
+    }
+    
+}
