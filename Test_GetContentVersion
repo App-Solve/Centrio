@@ -1,0 +1,14 @@
+@isTest
+private class Test_GetContentVersion {
+     @isTest static void testCallout() {
+        // Set mock callout class 
+        Test.setMock(HttpCalloutMock.class, new Mock_GetContentVersion());
+        HttpResponse res = GetContentVersion.byId('0687h000000AZFVAA4');
+    }
+
+    @isTest static void testCreate() {
+        Test.setMock(HttpCalloutMock.class, new Mock_GetContentVersion());
+        GetContentVersion.createInNewOrg('0687h000000AZFVAA8');
+
+    }
+}
