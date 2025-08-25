@@ -1,0 +1,10 @@
+/*
+Description : Wrapper class to get opportunity stage values.
+Author: Sindhur
+Date Of Creation: 21-12-2017
+Modification History: 
+*/
+public class StageWrapCls {
+    @AuraEnabled
+    public String StageName;
+}
